@@ -39,6 +39,7 @@
     let record=false;
     let count=0;
     const myOnnxSession = new onnx.InferenceSession();
+    const outputData = await session.loadModel('file:///Users/astu9880/Desktop/visrec.onnx');
 
     cv['onRuntimeInitialized']=()=>
     {
@@ -60,13 +61,26 @@
       let contextDisplay=canvasDisplay.getContext("2d");
 
 
+      let srcVector=new cv.MatVector();
       let src = new cv.Mat(96, 96, cv.CV_8UC4);
       let gray = new cv.Mat(96,96,cv.CV_8UC1)
       const FPS = 30;
       let list=[]
 
       function evaluate_onnx(){
+        list=[]
+        for(i=0;i<29;i++){
+          cv.cvtColor(srcVector.get(i), gray, cv.COLOR_RGBA2GRAY);
+          for(j=0;j<96;j++){
+            for(k=0;k<96;k++){
+              list=list.concat(gray.ucharPtr(j,k)/255)
+            }
+          }
+          console.log(i)
+        }
+        console.log('b')
         const inputs = new Tensor(list, 'float64', [29,96,96]);
+        
         console.log(count)
         console.log(inputs)
       }
@@ -77,15 +91,7 @@
           src.data.set(context.getImageData(0, 0, 96, 96).data);
           
           if(record){
-            for(i=0;i<29;i++){
-              cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-              for(j=0;j<96;j++){
-                for(k=0;k<96;k++){
-                  list.concat(gray.ucharPtr(j,k)/255)
-                }
-              }
-            }
-            console.log(list)
+            srcVector.push_back(src);
             count++;
             if(count==29){
               record=false;
@@ -113,7 +119,6 @@
       console.log('Beginning to save frames')
       count=0;
       record=true;
-      list=[]
     });
 
   </script>
